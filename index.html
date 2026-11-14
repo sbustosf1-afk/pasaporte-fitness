@@ -247,9 +247,10 @@ async function() {
 
       const codigo = obtenerCodigo(record);
 
-      estado.textContent =
+     estado.textContent =
   "TIPO: " + record.recordType +
-  " | BYTES: " + [...new Uint8Array(record.data)].join(",");
+  " | LONGITUD: " + record.data.byteLength +
+  " | BYTES: " + Array.from(new Uint8Array(record.data)).join(",");
       
       console.log("CODIGO RECIBIDO:", JSON.stringify(codigo));
 
