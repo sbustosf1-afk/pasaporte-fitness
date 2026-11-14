@@ -254,61 +254,65 @@ function enviarRegistro(codigo, nombreEstacion) {
 
 async function procesarTarjeta(mensaje) {
 
-  if (procesando) return;
+  mostrar("TARJETA DETECTADA. ANALIZANDO...");
 
-  procesando = true;
+  codigoPantalla.textContent = "";
 
-  try {
+  console.log("MENSAJE NFC:", mensaje);
 
-    mostrar("Leyendo tarjeta NFC...");
+  for (const record of mensaje.records) {
 
-    let codigoEncontrado = "";
+    console.log("TIPO:", record.recordType);
+    console.log("MIME:", record.mediaType);
+    console.log("ID:", record.id);
 
-    for (const record of mensaje.records) {
+    try {
 
-      const codigo = await obtenerCodigo(record);
+      if (record.recordType === "text") {
 
-      if (validarCodigo(codigo)) {
-        codigoEncontrado = codigo;
-        break;
+        const texto = await record.text();
+
+        console.log("TEXTO:", texto);
+
+        mostrar("TEXTO DETECTADO: " + texto);
+
+        codigoPantalla.textContent = texto;
+
+      } else if (record.data) {
+
+        const bytes = new Uint8Array(
+          record.data.buffer,
+          record.data.byteOffset,
+          record.data.byteLength
+        );
+
+        console.log("BYTES:", Array.from(bytes));
+
+        const contenido = new TextDecoder(
+          "utf-8"
+        ).decode(bytes);
+
+        console.log("CONTENIDO:", contenido);
+
+        mostrar("CONTENIDO: " + contenido);
+
+        codigoPantalla.textContent = contenido;
+
+      } else {
+
+        mostrar("REGISTRO DETECTADO: " + record.recordType);
+
       }
+
+    } catch (error) {
+
+      console.error("ERROR:", error);
+
+      mostrar("Error leyendo registro: " + error.message);
+
     }
-
-    if (!codigoEncontrado) {
-
-      mostrar("Tarjeta sin código válido. Verifica que contenga un texto como P001.");
-      codigoPantalla.textContent = "";
-
-      return;
-    }
-
-    codigoPantalla.textContent = codigoEncontrado;
-
-    mostrar("Código detectado: " + codigoEncontrado + ". Registrando...");
-
-    const respuesta = await enviarRegistro(
-      codigoEncontrado,
-      estacion.value
-    );
-
-    if (!respuesta.correcto) {
-      throw new Error(respuesta.mensaje);
-    }
-
-    mostrar(respuesta.mensaje);
-
-    codigoPantalla.textContent = codigoEncontrado + " ✓";
-
-  } catch (error) {
-
-    mostrar("ERROR: " + error.message);
-    console.error(error);
-
-  } finally {
-    procesando = false;
   }
 }
-
 /**************** ACTIVAR LECTOR NFC ****************/
 
 async function activarNFC() {
