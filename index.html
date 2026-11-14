@@ -140,44 +140,56 @@ function mostrar(mensaje) {
 
 async function obtenerCodigo(record) {
 
-  if (record.recordType !== "text") {
-    return "";
-  }
+  console.log("TIPO:", record.recordType);
+  console.log("MIME:", record.mediaType);
+  console.log("RECORD:", record);
 
   try {
-    if (typeof record.text === "function") {
+
+    if (record.recordType === "text") {
+
       const texto = await record.text();
+
+      console.log("TEXTO NFC:", texto);
+
       return texto.trim().toUpperCase();
     }
+
+    if (record.recordType === "url") {
+
+      const texto = await record.text();
+
+      console.log("URL NFC:", texto);
+
+      return texto.trim().toUpperCase();
+    }
+
+    if (record.data) {
+
+      const bytes = new Uint8Array(
+        record.data.buffer,
+        record.data.byteOffset,
+        record.data.byteLength
+      );
+
+      console.log("BYTES:", Array.from(bytes));
+
+      const texto = new TextDecoder(
+        "utf-8"
+      ).decode(bytes);
+
+      console.log("CONTENIDO:", texto);
+
+      return texto.trim().toUpperCase();
+    }
+
   } catch (error) {
-    console.log("Lectura alternativa:", error);
+
+    console.error("ERROR DE LECTURA:", error);
+
   }
 
-  if (!record.data) {
-    return "";
-  }
-
-  const bytes = new Uint8Array(
-    record.data.buffer,
-    record.data.byteOffset,
-    record.data.byteLength
-  );
-
-  if (bytes.length < 2) {
-    return "";
-  }
-
-  const longitudIdioma = bytes[0] & 0x3F;
-  const inicioTexto = 1 + longitudIdioma;
-
-  if (inicioTexto >= bytes.length) {
-    return "";
-  }
-
-  return new TextDecoder("utf-8")
-    .decode(bytes.slice(inicioTexto))
-    .trim()
-    .toUpperCase();
+  return "";
 }
 
 /**************** VALIDAR PARTICIPANTE ****************/
