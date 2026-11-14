@@ -171,24 +171,19 @@ function enviarRegistro(codigo) {
 // 4. LEER EL TEXTO DE LA TARJETA NFC
 
 function obtenerCodigo(record) {
-  if (record.recordType !== "text") {
-    return "";
-  }
 
   const bytes = new Uint8Array(record.data);
 
-  if (bytes.length < 3) {
-    return "";
-  }
+  let codigo = "";
 
-  const longitudIdioma = bytes[0] & 0x3F;
+  if (record.recordType === "text") {
 
-  const texto = new TextDecoder("utf-8")
-    .decode(bytes.slice(1 + longitudIdioma));
+    const longitudIdioma = bytes[0] & 0x3F;
 
-  return texto.trim().toUpperCase();
-}
- else {
+    codigo = new TextDecoder("utf-8")
+      .decode(bytes.slice(1 + longitudIdioma));
+
+  } else {
 
     codigo = new TextDecoder("utf-8")
       .decode(bytes);
@@ -297,3 +292,4 @@ async function() {
 
 </body>
 </html>
+
