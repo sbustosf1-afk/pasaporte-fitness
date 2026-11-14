@@ -246,8 +246,14 @@ async function() {
       }
 
       const codigo = obtenerCodigo(record);
+
+      estado.textContent =
+  "TIPO: " + record.recordType +
+  " | BYTES: " + [...new Uint8Array(record.data)].join(",");
       
       console.log("CODIGO RECIBIDO:", JSON.stringify(codigo));
+
+      return;
 
       if (!/^P\d{3,}$/.test(codigo)) {
 
