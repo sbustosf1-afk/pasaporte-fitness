@@ -247,15 +247,15 @@ async function() {
 
       const codigo = obtenerCodigo(record);
 
-     estado.textContent =
-  "TIPO: " + record.recordType +
-  " | LONGITUD: " + record.data.byteLength +
-  " | BYTES: " + Array.from(new Uint8Array(record.data)).join(",");
-      
-      console.log("CODIGO RECIBIDO:", JSON.stringify(codigo));
+   record.text().then(function(texto) {
 
-      return;
+  estado.textContent =
+    "TEXTO NFC RECIBIDO: [" + texto + "]";
 
+  console.log("TEXTO NFC:", JSON.stringify(texto));
+
+});
+return;
       if (!/^P\d{3,}$/.test(codigo)) {
 
         estado.textContent =
