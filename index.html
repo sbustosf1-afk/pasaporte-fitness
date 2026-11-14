@@ -171,24 +171,29 @@ function enviarRegistro(codigo) {
 // 4. LEER EL TEXTO DE LA TARJETA NFC
 
 function obtenerCodigo(record) {
-  if (record.recordType !== "text") {
-    return "";
-  }
-
   const bytes = new Uint8Array(record.data);
 
-  if (bytes.length < 2) {
-    return "";
+  if (record.recordType === "text") {
+    if (bytes.length < 2) return "";
+
+    const longitudIdioma = bytes[0] & 0x3F;
+
+    return new TextDecoder("utf-8")
+      .decode(bytes.slice(1 + longitudIdioma))
+      .replace(/^\uFEFF/, "")
+      .trim()
+      .toUpperCase();
   }
 
-  const longitudIdioma = bytes[0] & 0x3F;
+  if (record.recordType === "mime") {
+    return new TextDecoder("utf-8")
+      .decode(bytes)
+      .trim()
+      .toUpperCase();
+  }
 
-  const codigo = new TextDecoder("utf-8")
-    .decode(bytes.slice(1 + longitudIdioma));
-
-  return codigo.trim().toUpperCase();
+  return "";
 }
-
 // 5. ACTIVAR LECTOR NFC
 
 document.getElementById("iniciar").onclick =
