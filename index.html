@@ -241,6 +241,8 @@ async function() {
       }
 
       const codigo = obtenerCodigo(record);
+      
+      console.log("CODIGO RECIBIDO:", JSON.stringify(codigo));
 
       if (!/^P\d{3,}$/.test(codigo)) {
 
