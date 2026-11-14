@@ -188,6 +188,16 @@ function obtenerCodigo(record) {
 
   return texto.trim().toUpperCase();
 }
+ else {
+
+    codigo = new TextDecoder("utf-8")
+      .decode(bytes);
+
+  }
+
+  return codigo.trim().toUpperCase();
+
+}
 
 
 // 5. ACTIVAR LECTOR NFC
