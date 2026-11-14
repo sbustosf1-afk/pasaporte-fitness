@@ -223,6 +223,8 @@ async function() {
 
     reader.onreading = function(event) {
 
+      estado.textContent = "CHROME DETECTÓ UNA TARJETA NFC";
+      
       const registros = [...event.message.records];
 
       const record = registros.find(r =>
