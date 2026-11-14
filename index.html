@@ -221,32 +221,37 @@ async function() {
 
     const reader = new NDEFReader();
 
-    reader.onreading = function(event) {
+    reader.onreading = async function(event) {
 
-      estado.textContent = "CHROME DETECTÓ UNA TARJETA NFC";
-      
-      const registros = [...event.message.records];
+  estado.textContent = "TARJETA DETECTADA. LEYENDO...";
 
-      const record = registros.find(r =>
-        r.recordType === "text" ||
-        (r.recordType === "mime" &&
-         r.mediaType === "text/plain")
-      );
+  const registros = [...event.message.records];
 
-      if (!record) {
+  const record = registros.find(r =>
+    r.recordType === "text"
+  );
 
-        const tipos = registros.map(r =>
-          r.recordType
-        ).join(", ");
+  if (!record) {
+    estado.textContent = "No se encontró un registro de texto.";
+    return;
+  }
 
-        estado.textContent =
-          "No se encontró texto. Tipo leído: " +
-          (tipos || "ninguno");
+  try {
+    const codigo = (await record.text())
+      .trim()
+      .toUpperCase();
 
-        return;
+    estado.textContent =
+      "CÓDIGO EXTRAÍDO: " + (codigo || "VACÍO");
 
-      }
+    console.log("CÓDIGO EXTRAÍDO:", codigo);
 
+  } catch (error) {
+    estado.textContent =
+      "Error al leer el texto: " + error.message;
+  }
+
+};
       const codigo = obtenerCodigo(record);
 
    record.text().then(function(texto) {
