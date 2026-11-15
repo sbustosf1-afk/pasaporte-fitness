@@ -88,11 +88,10 @@ button {
 // CONFIGURACIÓN
 // =====================================
 
-
-
 const API_URL = "https://script.google.com/macros/s/AKfycbx1sJBxlPMIZBrqCYdqfkjRAwzyoTq-wGytKybyU0giKwwb9tw73kSH5tUdluOhoiv1AA/exec";
+
 const API_TOKEN = "FITNESS2026";
-  
+
 // =====================================
 // ELEMENTOS DE LA PANTALLA
 // =====================================
@@ -114,7 +113,7 @@ function mostrar(mensaje) {
 }
 
 // =====================================
-// LEER EL CONTENIDO DE LA TARJETA NFC
+// LEER CONTENIDO DE LA TARJETA NFC
 // =====================================
 
 function obtenerCodigo(record) {
@@ -140,27 +139,21 @@ function obtenerCodigo(record) {
     throw new Error("La tarjeta no contiene bytes.");
   }
 
-  let contenido;
-
   if (record.recordType === "text") {
 
-    // El primer byte contiene información del idioma.
     const longitudIdioma = bytes[0] & 0x3F;
-
     const inicioTexto = 1 + longitudIdioma;
 
-    contenido = new TextDecoder("utf-8").decode(
+    const contenido = new TextDecoder("utf-8").decode(
       bytes.slice(inicioTexto)
     );
 
-  } else {
-
-    // Lectura de otros registros como texto simple.
-    contenido = new TextDecoder("utf-8").decode(bytes);
-
+    return contenido.trim().toUpperCase();
   }
 
-  return contenido.trim().toUpperCase();
+  throw new Error(
+    "Tipo de registro no reconocido: " + record.recordType
+  );
 }
 
 // =====================================
@@ -168,9 +161,7 @@ function obtenerCodigo(record) {
 // =====================================
 
 function validarCodigo(codigo) {
-
   return /^P\d{3,}$/.test(codigo);
-
 }
 
 // =====================================
@@ -186,12 +177,12 @@ function registrarEnGoogle(codigo, estacion) {
 
     const script = document.createElement("script");
 
-    const url = new URL(API);
+    const url = new URL(API_URL);
 
     url.searchParams.set("accion", "registrar");
     url.searchParams.set("codigo", codigo);
     url.searchParams.set("estacion", estacion);
-    url.searchParams.set("token", TOKEN);
+    url.searchParams.set("token", API_TOKEN);
     url.searchParams.set("callback", nombreCallback);
 
     window[nombreCallback] = function(respuesta) {
@@ -208,7 +199,9 @@ function registrarEnGoogle(codigo, estacion) {
       delete window[nombreCallback];
       script.remove();
 
-      reject(new Error("No se pudo conectar con Google Sheets."));
+      reject(
+        new Error("No se pudo conectar con Google Sheets.")
+      );
 
     };
 
@@ -255,10 +248,9 @@ async function procesarTarjeta(mensaje) {
         );
 
         continue;
-
       }
 
-      mostrar("Código detectado. Registrando...");
+      mostrar("Código detectado: " + codigo + ". Registrando...");
 
       const estacion = selectorEstacion.value;
 
@@ -303,7 +295,6 @@ async function activarLector() {
     );
 
     return;
-
   }
 
   if (leyendo) {
@@ -322,9 +313,7 @@ async function activarLector() {
     mostrar("Lector activo. Acerca tu tarjeta.");
 
     lector.onreading = async function(evento) {
-
       await procesarTarjeta(evento);
-
     };
 
     lector.onerror = function(evento) {
@@ -334,7 +323,6 @@ async function activarLector() {
       mostrar("Error del lector NFC. Intenta activarlo nuevamente.");
 
       leyendo = false;
-
     };
 
   } catch (error) {
@@ -344,7 +332,6 @@ async function activarLector() {
     mostrar("No se pudo activar NFC: " + error.message);
 
     leyendo = false;
-
   }
 
 }
