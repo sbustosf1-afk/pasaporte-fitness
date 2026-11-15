@@ -2,61 +2,108 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pasaporte Fitness NFC</title>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 body {
+  margin: 0;
+  padding: 25px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #101510;
   color: white;
   font-family: Arial, sans-serif;
-  text-align: center;
-  padding: 20px;
 }
 
 .card {
+  width: 100%;
+  max-width: 430px;
+  padding: 30px 22px;
   background: #1d2b20;
-  border-radius: 15px;
-  padding: 22px;
-  max-width: 450px;
-  margin: auto;
+  border: 1px solid #354b38;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 10px 35px rgba(0,0,0,.35);
+}
+
+.logo {
+  font-size: 38px;
+  margin-bottom: 12px;
 }
 
 h1 {
-  color: #8ee58e;
+  color: #b6f36b;
+  font-size: 27px;
+  margin: 8px 0;
 }
 
-select, button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 12px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
+.subtitulo {
+  color: #c6d4c6;
+  font-size: 14px;
+  margin-bottom: 25px;
+}
+
+.estacion {
+  background: #304832;
+  color: #b6f36b;
+  padding: 13px;
+  border-radius: 10px;
+  font-weight: bold;
+  margin-bottom: 25px;
+}
+
+.instruccion {
+  font-size: 17px;
+  line-height: 1.5;
+  margin: 20px 0;
 }
 
 button {
-  background: #65c76b;
-  color: #102010;
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 17px;
+  background: #b6f36b;
+  color: #142015;
+  font-size: 16px;
   font-weight: bold;
   cursor: pointer;
 }
 
-#estado {
-  margin-top: 20px;
+button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.estado {
+  margin-top: 22px;
   padding: 15px;
-  background: #26372a;
-  border-radius: 8px;
+  background: #142017;
+  border-radius: 10px;
+  color: #d8e6d8;
+  font-size: 14px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
-#diagnostico {
-  margin-top: 12px;
-  padding: 12px;
-  background: #17231a;
-  border-radius: 8px;
-  font-size: 13px;
-  overflow-wrap: anywhere;
+.resultado {
+  margin-top: 15px;
+  color: #b6f36b;
+  font-weight: bold;
+  line-height: 1.6;
+}
+
+.pie {
+  color: #829482;
+  font-size: 11px;
+  margin-top: 25px;
 }
 </style>
 </head>
@@ -65,57 +112,97 @@ button {
 
 <div class="card">
 
-<h1>Pasaporte Fitness NFC</h1>
+  <div class="logo">🏅</div>
 
-<p>Acerca tu tarjeta NFC para registrar tu actividad.</p>
+  <h1>PASAPORTE FITNESS</h1>
 
-<label for="estacion">Selecciona la estación:</label>
+  <div class="subtitulo">
+    Sistema de registro de participantes NFC
+  </div>
 
-<select id="estacion">
-  <option value="COORDINACION">COORDINACIÓN</option>
-  <option value="FUERZA">FUERZA</option>
-  <option value="MOVIMIENTO">MOVIMIENTO</option>
-  <option value="BIENESTAR">BIENESTAR</option>
-</select>
+  <div class="estacion" id="nombreEstacion">
+    CARGANDO ESTACIÓN...
+  </div>
 
-<button id="iniciar">ACTIVAR LECTOR NFC</button>
+  <div class="instruccion">
+    Acerca tu tarjeta NFC al teléfono para registrar tu participación.
+  </div>
 
-<div id="estado">
-  Esperando activación del lector...
-</div>
+  <button id="boton" onclick="iniciarLector()">
+    INICIAR LECTOR NFC
+  </button>
 
-<div id="diagnostico">
-  Diagnóstico: pendiente
-</div>
+  <div class="estado" id="estado">
+    Esperando para iniciar el lector...
+  </div>
+
+  <div class="resultado" id="resultado"></div>
+
+  <div class="pie">
+    PASAPORTE FITNESS · REGISTRO DIGITAL
+  </div>
 
 </div>
 
 <script>
 
-// ==================================
+// ======================================
 // CONFIGURACIÓN
-// ==================================
+// ======================================
 
-const API_URL = "https://script.google.com/macros/s/AKfycbx1sJBxlPMIZBrqCYdqfkjRAwzyoTq-wGytKybyU0giKwwb9tw73kSH5tUdluOhoiv1AA/exec";
+const API = "https://script.google.com/macros/s/AKfycbx1sJBxlPMIZBrqCYdqfkjRAwzyoTq-wGytKybyU0giKwwb9tw73kSH5tUdluOhoiv1AA/exec";
 
-const API_TOKEN = "FITNESS2026";
+const TOKEN = "FITNESS2026";
 
-// ==================================
-// ELEMENTOS DE PANTALLA
-// ==================================
+// ======================================
+// ESTACIÓN
+// ======================================
 
+const parametros = new URLSearchParams(window.location.search);
+
+const estacion = (parametros.get("station") || "")
+  .trim()
+  .toUpperCase();
+
+const estacionesValidas = [
+  "COORDINACION",
+  "FUERZA",
+  "MOVIMIENTO",
+  "BIENESTAR"
+];
+
+const nombreEstacion = document.getElementById("nombreEstacion");
 const estado = document.getElementById("estado");
-const diagnostico = document.getElementById("diagnostico");
-const iniciar = document.getElementById("iniciar");
-const estacion = document.getElementById("estacion");
+const resultado = document.getElementById("resultado");
+const boton = document.getElementById("boton");
 
-// ==================================
-// CONVERTIR DATOS NFC EN BYTES
-// ==================================
+if (estacionesValidas.includes(estacion)) {
+  nombreEstacion.textContent = estacion;
+} else {
+  nombreEstacion.textContent = "ESTACIÓN NO CONFIGURADA";
+  boton.disabled = true;
+  estado.textContent =
+    "Error: la dirección no contiene una estación válida.";
+}
+
+// ======================================
+// VARIABLES DEL LECTOR
+// ======================================
+
+let lectorActivo = false;
+let procesando = false;
+
+// ======================================
+// OBTENER BYTES NFC
+// ======================================
 
 function obtenerBytes(record) {
 
   const data = record.data;
+
+  if (!data) {
+    return new Uint8Array();
+  }
 
   if (data instanceof DataView) {
     return new Uint8Array(
@@ -137,210 +224,266 @@ function obtenerBytes(record) {
     );
   }
 
-  throw new Error("Formato de datos NFC no reconocido");
+  return new Uint8Array();
 }
 
-// ==================================
-// OBTENER CÓDIGO DE LA TARJETA
-// ==================================
+// ======================================
+// EXTRAER CÓDIGO DE LA TARJETA
+// ======================================
 
 function obtenerCodigo(record) {
 
   if (record.recordType !== "text") {
-    throw new Error(
-      "El registro NFC no es de tipo texto: " +
-      record.recordType
-    );
+    throw new Error("La tarjeta no contiene un registro de texto.");
   }
 
   const bytes = obtenerBytes(record);
 
-  diagnostico.textContent =
-    "TIPO: " + record.recordType +
-    " | BYTES: " + Array.from(bytes).join(", ");
-
   if (bytes.length === 0) {
-    throw new Error("La tarjeta no contiene datos");
+    throw new Error("La tarjeta no contiene datos.");
   }
 
-  // Convertir directamente los bytes en texto
-  const texto = new TextDecoder("utf-8").decode(bytes);
+  const decodificador = new TextDecoder("utf-8");
 
-  // Limpiar espacios y caracteres invisibles
-  const codigo = texto
+  // Primero intenta leer el contenido directamente.
+  let texto = decodificador.decode(bytes).trim();
+
+  // Si no es un código válido, intenta interpretar
+  // el formato estándar NDEF Text RTD.
+  if (!/^P\d{3,}$/i.test(texto)) {
+
+    const longitudIdioma = bytes[0] & 0x3F;
+    const inicioTexto = 1 + longitudIdioma;
+
+    if (bytes.length <= inicioTexto) {
+      throw new Error("No se encontró texto en la tarjeta.");
+    }
+
+    texto = decodificador
+      .decode(bytes.slice(inicioTexto))
+      .trim();
+  }
+
+  texto = texto
     .replace(/[\u0000-\u001F\u007F]/g, "")
     .trim()
     .toUpperCase();
 
-  return codigo;
-}
-
-// ==================================
-// PROCESAR TARJETA
-// ==================================
-
-async function procesarTarjeta(message) {
-
-  try {
-
-    estado.textContent = "Tarjeta detectada. Analizando...";
-
-    if (!message || !message.records ||
-        message.records.length === 0) {
-
-      throw new Error("La tarjeta no contiene registros");
-    }
-
-    const record = message.records[0];
-
-    const codigo = obtenerCodigo(record);
-
-    diagnostico.textContent +=
-      " | CÓDIGO EXTRAÍDO: " + codigo;
-
-    // Validar código P
-    if (!/^P\d{3,}$/.test(codigo)) {
-
-      estado.textContent =
-        "Contenido leído: " + codigo +
-        ". No corresponde a un código P válido.";
-
-      return;
-    }
-
-    estado.textContent =
-      "Código reconocido: " + codigo +
-      ". Registrando actividad...";
-
-    await registrarEnGoogle(codigo);
-
-  } catch (error) {
-
-    estado.textContent =
-      "Error: " + error.message;
-
+  if (!/^P\d{3,}$/.test(texto)) {
+    throw new Error(
+      "Código NFC no válido. Contenido leído: " + texto
+    );
   }
 
+  return texto;
 }
 
-// ==================================
-// REGISTRAR EN GOOGLE APPS SCRIPT
-// ==================================
+// ======================================
+// ENVIAR REGISTRO A GOOGLE SHEETS
+// ======================================
 
-function registrarEnGoogle(codigo) {
+function enviarRegistro(codigo) {
 
   return new Promise((resolve, reject) => {
 
-    const callbackName =
-      "respuestaFitness" + Date.now();
+    const callback = "fitnessCallback_" +
+      Date.now() + "_" +
+      Math.floor(Math.random() * 100000);
+
+    const parametros = new URLSearchParams();
+
+    parametros.set("token", TOKEN);
+    parametros.set("codigo", codigo);
+    parametros.set("estacion", estacion);
+    parametros.set("callback", callback);
 
     const script = document.createElement("script");
 
-    const datos = {
-      token: API_TOKEN,
-      codigo: codigo,
-      estacion: estacion.value,
-      callback: callbackName
-    };
+    let terminado = false;
 
-    const parametros = new URLSearchParams(datos);
+    const tiempoLimite = setTimeout(() => {
+      finalizar();
+      reject(new Error(
+        "Tiempo de espera agotado. No se recibió respuesta de Google Sheets."
+      ));
+    }, 15000);
 
-    window[callbackName] = function(respuesta) {
+    function finalizar() {
 
-      delete window[callbackName];
+      if (terminado) return;
+
+      terminado = true;
+
+      clearTimeout(tiempoLimite);
+
+      delete window[callback];
+
       script.remove();
+    }
 
-      if (respuesta && respuesta.success) {
+    window[callback] = function(respuesta) {
 
-        estado.textContent =
-          "¡Registro exitoso! Código: " +
-          codigo +
-          " | Estación: " +
-          estacion.value;
+      finalizar();
 
-        resolve(respuesta);
-
-      } else {
-
-        const mensaje = respuesta && respuesta.message
-          ? respuesta.message
-          : "No se pudo confirmar el registro";
-
-        estado.textContent = mensaje;
-
-        reject(new Error(mensaje));
+      if (!respuesta) {
+        reject(new Error("Respuesta vacía del servidor."));
+        return;
       }
+
+      resolve(respuesta);
     };
 
     script.onerror = function() {
 
-      delete window[callbackName];
-      script.remove();
+      finalizar();
 
-      estado.textContent =
-        "Error de conexión con Google Sheets.";
-
-      reject(new Error("Error de conexión"));
+      reject(new Error(
+        "No fue posible conectar con Google Apps Script."
+      ));
     };
 
-    script.src =
-      API_URL + "?" +
-      parametros.toString();
+    script.src = API + "?" + parametros.toString();
 
     document.body.appendChild(script);
 
   });
-
 }
 
-// ==================================
-// ACTIVAR LECTOR NFC
-// ==================================
+// ======================================
+// PROCESAR TARJETA
+// ======================================
 
-iniciar.addEventListener("click", async function() {
+async function procesarTarjeta(message) {
+
+  if (procesando) return;
+
+  procesando = true;
 
   try {
 
-    if (!("NDEFReader" in window)) {
+    estado.textContent = "Tarjeta detectada. Analizando...";
+    resultado.textContent = "";
 
-      estado.textContent =
-        "Tu navegador no permite Web NFC. Utiliza Chrome en Android.";
-
-      return;
+    if (!message.records || message.records.length === 0) {
+      throw new Error("La tarjeta no contiene registros.");
     }
+
+    let codigo = null;
+
+    for (const record of message.records) {
+
+      if (record.recordType === "text") {
+        codigo = obtenerCodigo(record);
+        break;
+      }
+    }
+
+    if (!codigo) {
+      throw new Error("No se encontró un código de participante.");
+    }
+
+    const bytes = obtenerBytes(message.records.find(
+      record => record.recordType === "text"
+    ));
+
+    estado.textContent =
+      "Código detectado: " + codigo +
+      "\nEnviando registro a Google Sheets...";
+
+    const respuesta = await enviarRegistro(codigo);
+
+    if (respuesta.ok) {
+
+      estado.textContent = "REGISTRO EXITOSO";
+
+      resultado.textContent =
+        "Participante: " + respuesta.nombre +
+        "\nCódigo: " + respuesta.codigo +
+        "\nEstación: " + respuesta.estacion +
+        "\nEstado: " + respuesta.estado;
+
+    } else {
+
+      estado.textContent = respuesta.mensaje ||
+        "No fue posible registrar al participante.";
+
+      resultado.textContent = "";
+    }
+
+  } catch (error) {
+
+    estado.textContent = "Error: " + error.message;
+
+    resultado.textContent = "";
+
+  } finally {
+
+    procesando = false;
+
+  }
+}
+
+// ======================================
+// INICIAR LECTOR NFC
+// ======================================
+
+async function iniciarLector() {
+
+  if (!estacionesValidas.includes(estacion)) {
+    estado.textContent = "Configura una estación válida.";
+    return;
+  }
+
+  if (!("NDEFReader" in window)) {
+    estado.textContent =
+      "Este navegador no permite utilizar Web NFC. Abre la página en Chrome desde Android.";
+    return;
+  }
+
+  if (lectorActivo) {
+    estado.textContent = "El lector NFC ya está activo.";
+    return;
+  }
+
+  try {
 
     const lector = new NDEFReader();
 
-    estado.textContent =
-      "Solicitando permiso para utilizar NFC...";
-
     await lector.scan();
 
+    lectorActivo = true;
+
+    boton.disabled = true;
+
+    boton.textContent = "LECTOR ACTIVO";
+
     estado.textContent =
-      "Lector NFC activo. Acerca tu tarjeta.";
+      "Lector activo. Acerca tu tarjeta NFC.";
 
-    lector.onreading = function(evento) {
+    lector.onreading = async (evento) => {
 
-      procesarTarjeta(evento.message);
+      await procesarTarjeta(evento.message);
 
     };
 
-    lector.onreadingerror = function() {
+    lector.onreadingerror = () => {
 
       estado.textContent =
-        "No se pudo leer la tarjeta. Intenta nuevamente.";
+        "No fue posible leer la tarjeta. Intenta nuevamente.";
 
     };
 
   } catch (error) {
 
     estado.textContent =
-      "No se pudo activar el lector: " +
-      error.message;
+      "Error al iniciar el lector: " + error.message;
+
+    boton.disabled = false;
+
+    boton.textContent = "REINTENTAR LECTOR NFC";
 
   }
-
-});
+}
 
 </script>
 
