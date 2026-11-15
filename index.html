@@ -110,7 +110,7 @@ const iniciar = document.getElementById("iniciar");
 const estacion = document.getElementById("estacion");
 
 // ==================================
-// CONVERTIR LOS DATOS NFC EN BYTES
+// CONVERTIR DATOS NFC EN BYTES
 // ==================================
 
 function obtenerBytes(record) {
@@ -163,20 +163,8 @@ function obtenerCodigo(record) {
     throw new Error("La tarjeta no contiene datos");
   }
 
-  // Primer byte: información del idioma
-  const longitudIdioma = bytes[0] & 0x3F;
-
-  // Saltar el byte inicial y el código de idioma
-  const inicioTexto = 1 + longitudIdioma;
-
-  if (inicioTexto > bytes.length) {
-    throw new Error("Formato de texto NFC incorrecto");
-  }
-
-  const contenido = bytes.slice(inicioTexto);
-
-  const texto = new TextDecoder("utf-8")
-    .decode(contenido);
+  // Convertir directamente los bytes en texto
+  const texto = new TextDecoder("utf-8").decode(bytes);
 
   // Limpiar espacios y caracteres invisibles
   const codigo = texto
