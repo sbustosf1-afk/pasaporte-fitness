@@ -140,21 +140,18 @@ function obtenerCodigo(record) {
   if (record.recordType === "text") {
 
     const longitudIdioma = bytes[0] & 0x3F;
-
     const inicioTexto = 1 + longitudIdioma;
 
     return new TextDecoder("utf-8")
       .decode(bytes.slice(inicioTexto))
       .trim()
       .toUpperCase();
-
   }
 
   return new TextDecoder("utf-8")
     .decode(bytes)
     .trim()
     .toUpperCase();
-
 }
 
 // =====================================
@@ -213,7 +210,7 @@ function registrarEnGoogle(codigo, estacion) {
 }
 
 // =====================================
-// PROCESAR TARJETA NFC
+// PROCESAR REGISTROS NFC
 // =====================================
 
 async function procesarTarjeta(mensaje) {
@@ -223,10 +220,13 @@ async function procesarTarjeta(mensaje) {
 
   console.log("MENSAJE NFC:", mensaje);
 
-  if (!mensaje.records || mensaje.records.length === 0) {
+  if (!mensaje || !mensaje.records) {
+    mostrar("El mensaje NFC no contiene registros.");
+    return;
+  }
 
+  if (mensaje.records.length === 0) {
     mostrar("La tarjeta fue detectada, pero no tiene registros.");
-
     return;
   }
 
@@ -241,9 +241,7 @@ async function procesarTarjeta(mensaje) {
       console.log("CÓDIGO LEÍDO:", codigo);
 
       if (!codigo) {
-
         mostrar("La tarjeta no contiene texto.");
-
         continue;
       }
 
@@ -305,9 +303,7 @@ async function activarLector() {
   }
 
   if (leyendo) {
-
     mostrar("El lector ya está activo. Acerca tu tarjeta.");
-
     return;
   }
 
@@ -315,15 +311,35 @@ async function activarLector() {
 
     lector = new NDEFReader();
 
+    // Activar lectura NFC
     await lector.scan();
 
     leyendo = true;
 
     mostrar("Lector activo. Acerca tu tarjeta.");
 
+    // CORRECCIÓN: procesar evento.message
+
     lector.onreading = async function(evento) {
 
-      await procesarTarjeta(evento);
+      console.log("EVENTO NFC:", evento);
+      console.log("MENSAJE NFC:", evento.message);
+      console.log("REGISTROS NFC:", evento.message?.records);
+
+      if (!evento.message) {
+        mostrar("El evento NFC llegó sin mensaje.");
+        return;
+      }
+
+      if (
+        !evento.message.records ||
+        evento.message.records.length === 0
+      ) {
+        mostrar("Evento recibido, pero sin registros.");
+        return;
+      }
+
+      await procesarTarjeta(evento.message);
 
     };
 
@@ -334,7 +350,6 @@ async function activarLector() {
       mostrar("Error del lector NFC. Intenta activarlo nuevamente.");
 
       leyendo = false;
-
     };
 
   } catch (error) {
@@ -344,7 +359,6 @@ async function activarLector() {
     mostrar("No se pudo activar NFC: " + error.message);
 
     leyendo = false;
-
   }
 
 }
